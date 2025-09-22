@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 import { notFoundHandler } from "./shared/middlewares/notFoundHandler";
+import { errorHandler } from "./shared/middlewares/errorHandler";
 
 const app = express();
 
@@ -18,5 +19,7 @@ app.get("/", (req, res) => {
 });
 
 app.use(notFoundHandler);
+
+app.use(errorHandler);
 
 export default app;
