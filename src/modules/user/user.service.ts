@@ -1,0 +1,23 @@
+import { IUser } from "./user.interface";
+import bcrypt from "bcrypt";
+import UserModel, { IUserDocument } from "./user.model";
+
+const SALT_ROUNDS = 10;
+
+export const createUser = async (user: IUser): Promise<IUserDocument> => {
+  const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
+  const newUser = new UserModel({ ...user, password: hashedPassword });
+  return newUser.save();
+};
+
+export const findUserByEmail = async (
+  email: string
+): Promise<IUserDocument | null> => {
+  return UserModel.findOne({ email });
+};
+
+export const findUserById = async (
+  id: string
+): Promise<IUserDocument | null> => {
+  return UserModel.findById(id);
+};
