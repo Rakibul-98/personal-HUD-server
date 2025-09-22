@@ -1,26 +1,18 @@
-import dotenv from "dotenv";
-import express from "express";
-import mongoose from "mongoose";
+import app from "./app";
+import { connectDatabase } from "./shared/config/database";
+import { env } from "./shared/config/env";
 
-dotenv.config();
+const startServer = async () => {
+  try {
+    await connectDatabase();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI as string;
+    app.listen(env.port, () => {
+      console.log(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
 
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
-    console.log("MongoDB connected successfully!");
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-  });
-
-app.get("/", (req, res) => {
-  res.send("Server running & DB connected successfully!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+startServer();
