@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as feedService from "./feed.service";
 import { createFeedSchema } from "./feed.validation";
-import { IUserFocus } from "../focus/focus.model";
+import { IUserFocus } from "../focus/focus.interface";
 
 export const createFeed = async (req: Request, res: Response) => {
   try {
