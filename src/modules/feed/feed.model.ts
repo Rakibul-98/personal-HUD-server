@@ -17,7 +17,7 @@ const feedItemSchema = new Schema<IFeedItemDocument>(
     source: { type: String },
     category: { type: String },
     popularityScore: { type: Number, default: 0 },
-    externalId: { type: String, required: true, index: true }, // 👈 crucial
+    externalId: { type: String, required: true, index: true },
   },
   { timestamps: true }
 );
