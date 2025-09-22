@@ -1,4 +1,6 @@
 import { IUserFocus } from "../focus/focus.interface";
+import { IUserSettings } from "../settings/settings.interface";
+import SettingsModel from "../settings/settings.model";
 import { IFeedItem, IRankedFeedItem } from "./feed.interface";
 import FeedItemModel, { IFeedItemDocument } from "./feed.model";
 import { calculateRank } from "./feed.ranker";
@@ -11,18 +13,24 @@ export const createFeedItem = async (
 };
 
 export const getFeeds = async (
-  userFocus: IUserFocus | null = null
+  userFocus: IUserFocus | null = null,
+  userId?: string
 ): Promise<IRankedFeedItem[]> => {
-  let query = {};
+  let query: any = {};
+  let sortingPreference: IUserSettings["sortingPreference"] = "rank";
 
-  if (userFocus && userFocus.topics.length > 0) {
+  if (userId) {
+    const settings = await SettingsModel.findOne({ userId });
+    if (settings) sortingPreference = settings.sortingPreference;
+  }
+
+  if (userFocus?.topics?.length) {
     const regexFilters = userFocus.topics.map((keyword) => ({
       $or: [
         { title: { $regex: keyword, $options: "i" } },
         { content: { $regex: keyword, $options: "i" } },
       ],
     }));
-
     query = { $or: regexFilters };
   }
 
@@ -42,8 +50,27 @@ export const getFeeds = async (
     };
   });
 
-  ranked.sort((a, b) => b.rankScore - a.rankScore);
-  return ranked.slice(0, 50);
+  let sorted: IRankedFeedItem[] = [];
+  switch (sortingPreference) {
+    case "latest":
+      sorted = ranked.sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime()
+      );
+      break;
+    case "popularity":
+      sorted = ranked.sort(
+        (a, b) => (b.popularityScore || 0) - (a.popularityScore || 0)
+      );
+      break;
+    case "rank":
+    default:
+      sorted = ranked.sort((a, b) => b.rankScore - a.rankScore);
+      break;
+  }
+
+  return sorted.slice(0, 50);
 };
 
 export const getFeedById = async (

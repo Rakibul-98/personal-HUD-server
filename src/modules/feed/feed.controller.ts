@@ -18,10 +18,12 @@ export const createFeed = async (req: Request, res: Response) => {
 export const getFeeds = async (req: Request, res: Response) => {
   try {
     const userFocus: IUserFocus | null = req.body.userFocus || null;
+    const userId: string | undefined = req.body.userId;
 
-    const feeds = await feedService.getFeeds(userFocus);
+    const feeds = await feedService.getFeeds(userFocus, userId);
     res.json(feeds);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 };
