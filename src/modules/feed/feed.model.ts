@@ -6,6 +6,7 @@ export interface IFeedItemDocument extends Document {
   source?: string;
   category?: string;
   popularityScore?: number;
+  externalId: string;
   createdAt?: Date;
 }
 
@@ -16,6 +17,7 @@ const feedItemSchema = new Schema<IFeedItemDocument>(
     source: { type: String },
     category: { type: String },
     popularityScore: { type: Number, default: 0 },
+    externalId: { type: String, required: true, index: true }, // 👈 crucial
   },
   { timestamps: true }
 );

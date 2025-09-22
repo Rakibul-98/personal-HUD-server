@@ -9,7 +9,9 @@ export const createFeedItem = async (
 };
 
 export const getFeeds = async (): Promise<IFeedItemDocument[]> => {
-  return FeedItemModel.find().sort({ popularityScore: -1, createdAt: -1 });
+  return FeedItemModel.find()
+    .sort({ createdAt: -1, popularityScore: -1 })
+    .limit(50);
 };
 
 export const getFeedById = async (
