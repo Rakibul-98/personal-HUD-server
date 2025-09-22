@@ -21,3 +21,9 @@ export const findUserById = async (
 ): Promise<IUserDocument | null> => {
   return UserModel.findById(id);
 };
+
+export const getUserByEmail = async (
+  email: string
+): Promise<Omit<IUserDocument, "password"> | null> => {
+  return UserModel.findOne({ email }).select("-password");
+};
