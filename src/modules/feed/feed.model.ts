@@ -7,6 +7,7 @@ export interface IFeedItemDocument extends Document {
   category?: string;
   popularityScore?: number;
   externalId: string;
+  rankScore: { type: Number; default: 0 };
   createdAt?: Date;
 }
 
@@ -18,6 +19,7 @@ const feedItemSchema = new Schema<IFeedItemDocument>(
     category: { type: String },
     popularityScore: { type: Number, default: 0 },
     externalId: { type: String, required: true, index: true },
+    rankScore: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

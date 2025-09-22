@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as feedService from "./feed.service";
 import { createFeedSchema } from "./feed.validation";
+import { IUserFocus } from "../focus/focus.model";
 
 export const createFeed = async (req: Request, res: Response) => {
   try {
@@ -14,9 +15,11 @@ export const createFeed = async (req: Request, res: Response) => {
   }
 };
 
-export const getFeeds = async (_req: Request, res: Response) => {
+export const getFeeds = async (req: Request, res: Response) => {
   try {
-    const feeds = await feedService.getFeeds();
+    const userFocus: IUserFocus | null = req.body.userFocus || null;
+
+    const feeds = await feedService.getFeeds(userFocus);
     res.json(feeds);
   } catch (err) {
     res.status(500).json({ error: "Server error" });
