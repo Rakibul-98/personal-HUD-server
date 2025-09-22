@@ -1,5 +1,5 @@
+import { IUserFocus } from "../focus/focus.interface";
 import { IFeedItem } from "./feed.interface";
-import { IUserFocus } from "../focus/focus.model";
 
 export const calculateRank = (
   feed: IFeedItem,

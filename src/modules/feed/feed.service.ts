@@ -1,7 +1,7 @@
+import { IUserFocus } from "../focus/focus.interface";
 import { IFeedItem, IRankedFeedItem } from "./feed.interface";
 import FeedItemModel, { IFeedItemDocument } from "./feed.model";
 import { calculateRank } from "./feed.ranker";
-import { IUserFocus } from "../focus/focus.model";
 
 export const createFeedItem = async (
   data: IFeedItem
@@ -13,7 +13,20 @@ export const createFeedItem = async (
 export const getFeeds = async (
   userFocus: IUserFocus | null = null
 ): Promise<IRankedFeedItem[]> => {
-  const feeds: any[] = await FeedItemModel.find().lean().limit(200);
+  let query = {};
+
+  if (userFocus && userFocus.topics.length > 0) {
+    const regexFilters = userFocus.topics.map((keyword) => ({
+      $or: [
+        { title: { $regex: keyword, $options: "i" } },
+        { content: { $regex: keyword, $options: "i" } },
+      ],
+    }));
+
+    query = { $or: regexFilters };
+  }
+
+  const feeds: any[] = await FeedItemModel.find(query).lean().limit(200);
 
   const ranked: IRankedFeedItem[] = feeds.map((f) => {
     return {
@@ -30,7 +43,6 @@ export const getFeeds = async (
   });
 
   ranked.sort((a, b) => b.rankScore - a.rankScore);
-
   return ranked.slice(0, 50);
 };
 
