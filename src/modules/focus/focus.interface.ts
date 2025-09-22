@@ -1,6 +1,6 @@
-import { Types } from "mongoose";
+import { Types, Document } from "mongoose";
 
-export interface IUserFocus {
+export interface IUserFocus extends Document {
   userId: Types.ObjectId;
   topics: string[];
 }
