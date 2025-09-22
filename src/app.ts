@@ -3,6 +3,7 @@ import cors from "cors";
 import { notFoundHandler } from "./shared/middlewares/notFoundHandler";
 import { errorHandler } from "./shared/middlewares/errorHandler";
 import userRoutes from "./modules/user/user.route";
+import feedRoutes from "./modules/feed/feed.route";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/users", userRoutes);
+app.use("/api/feeds", feedRoutes);
 
 app.use(notFoundHandler);
 
