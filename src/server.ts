@@ -3,7 +3,7 @@ import app from "./app";
 import { connectDatabase } from "./shared/config/database";
 import { env } from "./shared/config/env";
 
-const startServer = async () => {
+const main = async () => {
   try {
     await connectDatabase();
 
@@ -18,4 +18,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+main();
