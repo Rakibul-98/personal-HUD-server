@@ -1,19 +1,16 @@
-export class ApiResponse<T> {
-  public success: boolean;
-  public message: string;
-  public data?: T;
+export class ApiResponse {
+  constructor(
+    public statusCode: number,
+    public data: any = null,
+    public message: string = "Success",
+    public success: boolean = statusCode < 400
+  ) {}
 
-  constructor(success: boolean, message: string, data?: T) {
-    this.success = success;
-    this.message = message;
-    this.data = data;
+  static success(data: any = null, message: string = "Success") {
+    return new ApiResponse(200, data, message, true);
   }
 
-  static success<T>(data: T, message = "Success") {
-    return new ApiResponse<T>(true, message, data);
-  }
-
-  static error(message = "Error") {
-    return new ApiResponse<null>(false, message, null);
+  static error(message: string, statusCode: number = 500) {
+    return new ApiResponse(statusCode, null, message, false);
   }
 }

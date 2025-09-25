@@ -19,8 +19,15 @@ export const getFeeds = async (req: Request, res: Response) => {
   try {
     const userFocus: IUserFocus | null = req.body.userFocus || null;
     const userId: string | undefined = req.body.userId;
+    const feedSources = req.body.feedSources || null;
+    const sortingPreference = req.body.sortingPreference;
 
-    const feeds = await feedService.getFeeds(userFocus, userId);
+    const feeds = await feedService.getFeeds(
+      userFocus,
+      userId,
+      feedSources,
+      sortingPreference
+    );
     res.json(feeds);
   } catch (err) {
     console.error(err);

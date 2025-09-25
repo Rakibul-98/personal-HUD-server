@@ -4,7 +4,7 @@ import * as settingsService from "./settings.service";
 export const getSettings = async (req: Request, res: Response) => {
   try {
     const userId = req.body.userId;
-    const settings = await settingsService.getUserSettings(userId);
+    const settings = await settingsService.getOrCreateUserSettings(userId);
     res.json(settings);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch settings" });

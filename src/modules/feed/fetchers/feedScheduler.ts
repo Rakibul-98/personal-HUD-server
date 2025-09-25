@@ -3,20 +3,7 @@ import { fetchDevto } from "./devToFetcher";
 import { fetchHackerNews } from "./hackerNewsFetcher";
 import { fetchReddit } from "./redditFetcher";
 
-export const startFeedScheduler = async () => {
-  console.log("Initial feed fetch starting...");
-  await fetchFeedsForAllUsers();
-
-  setInterval(
-    async () => {
-      console.log("Updating feeds...");
-      await fetchFeedsForAllUsers();
-    },
-    5 * 60 * 1000
-  );
-};
-
-const fetchFeedsForAllUsers = async () => {
+export const fetchFeedsForAllUsers = async () => {
   const allSettings = await SettingsModel.find({});
 
   for (const s of allSettings) {

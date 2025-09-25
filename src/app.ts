@@ -7,10 +7,11 @@ import userRoutes from "./modules/user/user.route";
 import feedRoutes from "./modules/feed/feed.route";
 import bookmarkRoutes from "./modules/bookmark/bookmark.route";
 import settingsRoutes from "./modules/settings/settings.route";
+import focusRoutes from "./modules/focus/focus.route";
 
 const app: Application = express();
 
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
@@ -22,6 +23,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/feeds", feedRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/focus", focusRoutes);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

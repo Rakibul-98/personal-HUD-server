@@ -1,21 +1,22 @@
 import app from "./app";
-// import { startFeedScheduler } from "./modules/feed/fetchers/feedScheduler";
 import { connectDatabase } from "./shared/config/database";
 import { env } from "./shared/config/env";
 
 const main = async () => {
   try {
     await connectDatabase();
-
-    // startFeedScheduler();
-
-    app.listen(env.port, () => {
-      console.log(`Server running on port ${env.port} in ${env.nodeEnv} mode`);
-    });
+    if (process.env.NODE_ENV !== "production") {
+      app.listen(env.port, () => {
+        console.log(`Server running on http://localhost:${env.port}`);
+      });
+    }
   } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
+    console.error("Failed to connect database:", error);
   }
 };
 
+// Run DB connect on cold start
 main();
+
+// ❌ remove app.listen for production
+export default app;

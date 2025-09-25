@@ -14,12 +14,20 @@ export const createFeedItem = async (
 
 export const getFeeds = async (
   userFocus: IUserFocus | null = null,
-  userId?: string
+  userId?: string,
+  feedSources?: {
+    reddit?: boolean;
+    hackerNews?: boolean;
+    devTo?: boolean;
+  } | null,
+  overrideSortingPreference?: IUserSettings["sortingPreference"]
 ): Promise<IRankedFeedItem[]> => {
   let query: any = {};
   let sortingPreference: IUserSettings["sortingPreference"] = "rank";
 
-  if (userId) {
+  if (overrideSortingPreference) {
+    sortingPreference = overrideSortingPreference;
+  } else if (userId) {
     const settings = await SettingsModel.findOne({ userId });
     if (settings) sortingPreference = settings.sortingPreference;
   }
@@ -32,6 +40,21 @@ export const getFeeds = async (
       ],
     }));
     query = { $or: regexFilters };
+  }
+
+  if (feedSources) {
+    const selectedSources = Object.keys(feedSources).filter(
+      (k) => (feedSources as any)[k]
+    );
+    if (selectedSources.length > 0) {
+      if (Object.keys(query).length > 0) {
+        query = {
+          $and: [{ $or: query.$or }, { source: { $in: selectedSources } }],
+        };
+      } else {
+        query.source = { $in: selectedSources };
+      }
+    }
   }
 
   const feeds: any[] = await FeedItemModel.find(query).lean().limit(200);

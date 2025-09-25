@@ -3,7 +3,8 @@ import { IBookmark } from "./bookmark.interface";
 
 export const createBookmark = async (data: IBookmark) => {
   const bookmark = new Bookmark(data);
-  return await bookmark.save();
+  await bookmark.save();
+  return await bookmark.populate("feedItem");
 };
 
 export const getUserBookmarks = async (userId: string) => {

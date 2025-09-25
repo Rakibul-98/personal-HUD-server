@@ -4,21 +4,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __importDefault(require("./app"));
-const feedScheduler_1 = require("./modules/feed/fetchers/feedScheduler");
 const database_1 = require("./shared/config/database");
 const env_1 = require("./shared/config/env");
-const startServer = async () => {
+const main = async () => {
     try {
         await (0, database_1.connectDatabase)();
-        (0, feedScheduler_1.startFeedScheduler)();
-        app_1.default.listen(env_1.env.port, () => {
-            console.log(`Server running on port ${env_1.env.port} in ${env_1.env.nodeEnv} mode`);
-        });
+        if (process.env.NODE_ENV !== "production") {
+            app_1.default.listen(env_1.env.port, () => {
+                console.log(`Server running on http://localhost:${env_1.env.port}`);
+            });
+        }
     }
     catch (error) {
-        console.error("Failed to start server:", error);
-        process.exit(1);
+        console.error("Failed to connect database:", error);
     }
 };
-startServer();
-//# sourceMappingURL=server.js.map
+// Run DB connect on cold start
+main();
+// ❌ remove app.listen for production
+exports.default = app_1.default;
