@@ -15,8 +15,6 @@ const main = async () => {
   }
 };
 
-// Run DB connect on cold start
 main();
 
-// ❌ remove app.listen for production
 export default app;

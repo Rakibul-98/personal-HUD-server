@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import * as focusService from "./focus.service";
 
-// Get user's current topics
 export const getFocus = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
@@ -12,7 +11,6 @@ export const getFocus = async (req: Request, res: Response) => {
   }
 };
 
-// Add keyword
 export const addFocusKeyword = async (req: Request, res: Response) => {
   try {
     const { userId, keyword } = req.body;
@@ -26,7 +24,6 @@ export const addFocusKeyword = async (req: Request, res: Response) => {
   }
 };
 
-// Remove keyword
 export const removeFocusKeyword = async (req: Request, res: Response) => {
   try {
     const { userId, keyword } = req.body;

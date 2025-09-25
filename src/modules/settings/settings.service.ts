@@ -4,12 +4,6 @@ import { fetchHackerNews } from "../feed/fetchers/hackerNewsFetcher";
 import { fetchReddit } from "../feed/fetchers/redditFetcher";
 import { fetchDevto } from "../feed/fetchers/devToFetcher";
 
-// export const getUserSettings = async (
-//   userId: string
-// ): Promise<IUserSettings | null> => {
-//   return SettingsModel.findOne({ userId });
-// };
-
 export const getOrCreateUserSettings = async (
   userId: string
 ): Promise<IUserSettings> => {

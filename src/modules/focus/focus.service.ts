@@ -1,7 +1,6 @@
 import { IUserFocus } from "./focus.interface";
 import Focus from "./focus.model";
 
-// Get user focus
 export const getUserFocus = async (userId: string): Promise<IUserFocus> => {
   let focus = await Focus.findOne({ userId });
   if (!focus) {
@@ -11,7 +10,6 @@ export const getUserFocus = async (userId: string): Promise<IUserFocus> => {
   return focus;
 };
 
-// Add a keyword/topic
 export const addKeyword = async (userId: string, keyword: string) => {
   const focus = await getUserFocus(userId);
   if (!focus.topics.includes(keyword)) {
@@ -21,7 +19,6 @@ export const addKeyword = async (userId: string, keyword: string) => {
   return focus;
 };
 
-// Remove a keyword/topic
 export const removeKeyword = async (userId: string, keyword: string) => {
   const focus = await getUserFocus(userId);
   focus.topics = focus.topics.filter((k) => k !== keyword);
