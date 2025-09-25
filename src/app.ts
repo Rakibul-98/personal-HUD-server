@@ -14,10 +14,7 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://personal-hud-client.vercel.app/",
-    ],
+    origin: ["http://localhost:3000", "https://personal-hud-client.vercel.app"],
     credentials: true,
   })
 );
