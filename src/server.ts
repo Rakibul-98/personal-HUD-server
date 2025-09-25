@@ -5,11 +5,12 @@ import { env } from "./shared/config/env";
 const main = async () => {
   try {
     await connectDatabase();
-    if (process.env.NODE_ENV !== "production") {
-      app.listen(env.port, () => {
-        `Server running on http://localhost:${env.port}`;
-      });
-    }
+
+    const PORT = env.port;
+
+    app.listen(env.port, () => {
+      `Server running on http://localhost:${PORT}`;
+    });
   } catch (error) {
     console.error("Failed to connect database:", error);
   }
