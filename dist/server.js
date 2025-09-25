@@ -19,7 +19,5 @@ const main = async () => {
         console.error("Failed to connect database:", error);
     }
 };
-// Run DB connect on cold start
 main();
-// ❌ remove app.listen for production
 exports.default = app_1.default;
