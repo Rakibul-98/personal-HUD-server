@@ -1,5 +1,13 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+// user.interface.ts
+export interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  role?: "user" | "admin";
+}
+
 export interface IUserDocument extends Document {
   _id: Types.ObjectId;
   name: string;

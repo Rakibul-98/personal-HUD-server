@@ -8,7 +8,7 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  logger.error(err.message);
+  // logger.error(err.message);
 
   return res.status(500).json(ApiResponse.error("Internal Server Error"));
 };

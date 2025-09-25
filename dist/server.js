@@ -11,7 +11,7 @@ const main = async () => {
         await (0, database_1.connectDatabase)();
         if (process.env.NODE_ENV !== "production") {
             app_1.default.listen(env_1.env.port, () => {
-                console.log(`Server running on http://localhost:${env_1.env.port}`);
+                `Server running on http://localhost:${env_1.env.port}`;
             });
         }
     }
@@ -21,3 +21,4 @@ const main = async () => {
 };
 main();
 exports.default = app_1.default;
+//# sourceMappingURL=server.js.map
