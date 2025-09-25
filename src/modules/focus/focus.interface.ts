@@ -1,6 +1,8 @@
-import { Types, Document } from "mongoose";
+import { HydratedDocument, Types } from "mongoose";
 
-export interface IUserFocus extends Document {
+export interface IUserFocus {
   userId: Types.ObjectId;
   topics: string[];
 }
+
+export type IUserFocusDoc = HydratedDocument<IUserFocus>;

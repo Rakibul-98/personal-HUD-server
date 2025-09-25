@@ -1,7 +1,7 @@
-import { IUserFocus } from "./focus.interface";
+import { IUserFocusDoc } from "./focus.interface";
 import Focus from "./focus.model";
 
-export const getUserFocus = async (userId: string): Promise<IUserFocus> => {
+export const getUserFocus = async (userId: string): Promise<IUserFocusDoc> => {
   let focus = await Focus.findOne({ userId });
   if (!focus) {
     focus = new Focus({ userId, topics: [] });

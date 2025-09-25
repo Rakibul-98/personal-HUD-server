@@ -30,7 +30,7 @@ export const getFeeds = async (req: Request, res: Response) => {
     );
     res.json(feeds);
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 };

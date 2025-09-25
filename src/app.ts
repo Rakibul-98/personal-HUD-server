@@ -8,6 +8,7 @@ import feedRoutes from "./modules/feed/feed.route";
 import bookmarkRoutes from "./modules/bookmark/bookmark.route";
 import settingsRoutes from "./modules/settings/settings.route";
 import focusRoutes from "./modules/focus/focus.route";
+import { Request, Response } from "express";
 
 const app: Application = express();
 
@@ -15,7 +16,7 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 

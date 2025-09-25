@@ -3,7 +3,7 @@ import { fetchFeedsForAllUsers } from "./fetchers/feedScheduler";
 
 export const refreshFeeds = async (req: Request, res: Response) => {
   try {
-    console.log("Cron job triggered: refreshing feeds...");
+    ("Cron job triggered: refreshing feeds...");
     await fetchFeedsForAllUsers();
     res.json({ success: true, message: "Feeds refreshed" });
   } catch (error) {

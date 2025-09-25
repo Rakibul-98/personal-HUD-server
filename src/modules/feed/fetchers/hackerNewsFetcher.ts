@@ -36,7 +36,7 @@ export const fetchHackerNews = async () => {
       }
     }
 
-    console.log(`Hacker News feed updated. Inserted ${newCount} new items.`);
+    `Hacker News feed updated. Inserted ${newCount} new items.`;
   } catch (error) {
     console.error("Error fetching Hacker News:", error);
   }

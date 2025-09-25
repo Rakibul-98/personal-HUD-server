@@ -41,7 +41,7 @@ export const fetchReddit = async () => {
       }
 
       totalInserted += newCount;
-      console.log(`Reddit /r/${subreddit}: Inserted ${newCount} new items.`);
+      `Reddit /r/${subreddit}: Inserted ${newCount} new items.`;
     } catch (error: any) {
       console.error(`Error fetching /r/${subreddit}:`, error.message || error);
       failedSubreddits.push(subreddit);

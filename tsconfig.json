@@ -20,6 +20,5 @@
       "@/shared/*": ["./shared/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "types": ["node"]
 }

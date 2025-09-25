@@ -28,7 +28,7 @@ export const fetchDevto = async () => {
       if (result.upsertedCount > 0) newCount++;
     }
 
-    console.log(`Dev.to feed updated. Inserted ${newCount} new items.`);
+    `Dev.to feed updated. Inserted ${newCount} new items.`;
   } catch (error) {
     console.error("Error fetching Dev.to:", error);
   }
