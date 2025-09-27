@@ -1,6 +1,6 @@
-import { IUser } from "./user.interface";
-import UserModel, { IUserDocument } from "./user.model";
+import { IUser, IUserDocument } from "./user.interface";
 import bcrypt from "bcryptjs";
+import UserModel from "./user.model";
 
 const SALT_ROUNDS = 10;
 

@@ -8,6 +8,7 @@ import feedRoutes from "./modules/feed/feed.route";
 import bookmarkRoutes from "./modules/bookmark/bookmark.route";
 import settingsRoutes from "./modules/settings/settings.route";
 import focusRoutes from "./modules/focus/focus.route";
+import googleAuthRoutes from "./modules/auth/auth.route";
 import { Request, Response } from "express";
 
 const app: Application = express();
@@ -30,6 +31,7 @@ app.use("/api/feeds", feedRoutes);
 app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/focus", focusRoutes);
+app.use("/api/auth", googleAuthRoutes);
 
 app.use(errorHandler);
 app.use(notFoundHandler);

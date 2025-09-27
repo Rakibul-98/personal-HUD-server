@@ -1,19 +1,11 @@
-import { Schema, model, Document } from "mongoose";
-
-export interface IUserDocument extends Document {
-  name: string;
-  email: string;
-  password: string;
-  role?: "user" | "admin";
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { Schema, model } from "mongoose";
+import { IUserDocument } from "./user.interface";
 
 const userSchema = new Schema<IUserDocument>(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
+    password: { type: String, required: false },
     role: { type: String, enum: ["user", "admin"], default: "user" },
   },
   { timestamps: true }
