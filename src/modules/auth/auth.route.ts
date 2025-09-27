@@ -14,11 +14,31 @@ router.get(
   passport.authenticate("google", { session: false }),
   (req, res) => {
     const user = req.user as any;
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+
+    const role = user.role || "user";
+
+    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
     });
-    res.json({ token, user });
-    res.redirect(`http://localhost:3000/feed?token=${token}`);
+
+    const userForFrontend = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      role,
+    };
+
+    const FRONTEND_URL =
+      process.env.NODE_ENV === "production"
+        ? "https://personal-hud-client.vercel.app"
+        : "http://localhost:3000";
+
+    const redirectUrl = `${FRONTEND_URL}/google-success?token=${token}&user=${encodeURIComponent(
+      JSON.stringify(userForFrontend)
+    )}`;
+
+    res.redirect(redirectUrl);
   }
 );
 
