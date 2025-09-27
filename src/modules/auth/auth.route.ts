@@ -18,6 +18,7 @@ router.get(
       expiresIn: "7d",
     });
     res.json({ token, user });
+    res.redirect(`http://localhost:3000/feed?token=${token}`);
   }
 );
 
