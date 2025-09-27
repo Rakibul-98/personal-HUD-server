@@ -7,6 +7,6 @@ const router = Router();
 router.post("/", feedController.createFeed);
 router.post("/list", feedController.getFeeds);
 router.get("/:id", feedController.getFeedById);
-router.get("/refresh", refreshFeeds);
+router.post("/refresh", refreshFeeds);
 
 export default router;
