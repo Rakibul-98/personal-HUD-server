@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import { AuthenticatedRequest } from "../types";
 
 // For testing/demo - use mock user
 export const authenticate: RequestHandler = (
