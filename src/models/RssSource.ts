@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IRssSource extends Document {
   userId: mongoose.Types.ObjectId;
@@ -8,12 +8,26 @@ export interface IRssSource extends Document {
   lastFetched: Date;
 }
 
-const RssSourceSchema: Schema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  name: { type: String, required: true, trim: true },
-  url: { type: String, required: true, unique: true, trim: true },
-  isActive: { type: Boolean, default: true },
-  lastFetched: { type: Date, default: Date.now },
-}, { timestamps: true });
+const RssSourceSchema = new Schema<IRssSource>(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    name: { type: String, required: true, trim: true, maxlength: 100 },
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+      validate: {
+        validator: (v: string) => /^https?:\/\/.+/.test(v),
+        message: "URL must start with http:// or https://",
+      },
+    },
+    isActive: { type: Boolean, default: true },
+    lastFetched: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
 
-export default mongoose.model<IRssSource>('RssSource', RssSourceSchema);
+// Uniqueness per user — different users can follow the same RSS feed
+RssSourceSchema.index({ userId: 1, url: 1 }, { unique: true });
+
+export default mongoose.model<IRssSource>("RssSource", RssSourceSchema);

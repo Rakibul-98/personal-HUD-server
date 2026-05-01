@@ -1,32 +1,23 @@
 import { Request, Response } from "express";
 import * as settingsService from "./settings.service";
+import { AuthenticatedRequest } from "../../shared/types";
 
 export const getSettings = async (req: Request, res: Response) => {
-  try {
-    const userId = req.body.userId;
-    const settings = await settingsService.getOrCreateUserSettings(userId);
-    res.json(settings);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch settings" });
-  }
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  const settings = await settingsService.getOrCreateUserSettings(userId);
+  res.json({ success: true, data: settings });
 };
 
 export const updateSettings = async (req: Request, res: Response) => {
-  try {
-    const userId = req.body.userId;
-    const updated = await settingsService.updateUserSettings(userId, req.body);
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update settings" });
-  }
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  // Strip userId from body — never allow client to change which user's settings
+  const { userId: _ignored, ...updates } = req.body;
+  const updated = await settingsService.updateUserSettings(userId, updates);
+  res.json({ success: true, data: updated });
 };
 
 export const fetchNow = async (req: Request, res: Response) => {
-  try {
-    const userId = req.body.userId;
-    const fetchedSources = await settingsService.manualFetch(userId);
-    res.json({ message: "Fetch completed", sources: fetchedSources });
-  } catch (err) {
-    res.status(500).json({ error: "Manual fetch failed" });
-  }
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  const fetchedSources = await settingsService.manualFetch(userId);
+  res.json({ success: true, message: "Fetch completed", data: { sources: fetchedSources } });
 };

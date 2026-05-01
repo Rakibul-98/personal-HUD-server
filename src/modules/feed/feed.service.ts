@@ -12,68 +12,87 @@ export const createFeedItem = async (
   return feedItem.save();
 };
 
-export const getFeeds = async (
-  userFocus: IUserFocus | null = null,
-  userId?: string,
+export interface GetFeedsOptions {
+  userFocus?: IUserFocus | null;
+  userId?: string;
   feedSources?: {
     reddit?: boolean;
     hackerNews?: boolean;
     devTo?: boolean;
-  } | null,
-  overrideSortingPreference?: IUserSettings["sortingPreference"]
-): Promise<IRankedFeedItem[]> => {
+  } | null;
+  overrideSortingPreference?: IUserSettings["sortingPreference"];
+  page?: number;
+  limit?: number;
+}
+
+export const getFeeds = async ({
+  userFocus = null,
+  userId,
+  feedSources,
+  overrideSortingPreference,
+  page = 1,
+  limit = 20,
+}: GetFeedsOptions): Promise<{ items: IRankedFeedItem[]; total: number; page: number; totalPages: number }> => {
   let query: any = {};
   let sortingPreference: IUserSettings["sortingPreference"] = "rank";
 
   if (overrideSortingPreference) {
     sortingPreference = overrideSortingPreference;
   } else if (userId) {
-    const settings = await SettingsModel.findOne({ userId });
+    const settings = await SettingsModel.findOne({ userId }).lean();
     if (settings) sortingPreference = settings.sortingPreference;
   }
 
+  // Topic filter — use $text index if available, fallback to $regex
   if (userFocus?.topics?.length) {
     const regexFilters = userFocus.topics.map((keyword) => ({
       $or: [
         { title: { $regex: keyword, $options: "i" } },
-        { content: { $regex: keyword, $options: "i" } },
+        { tags: { $in: [new RegExp(keyword, "i")] } },
       ],
     }));
-    query = { $or: regexFilters };
+    query.$or = regexFilters.flatMap((f) => f.$or);
   }
 
+  // Source filter
   if (feedSources) {
-    const selectedSources = Object.keys(feedSources).filter(
-      (k) => (feedSources as any)[k]
-    );
+    const selectedSources = Object.entries(feedSources)
+      .filter(([, enabled]) => enabled)
+      .map(([key]) => {
+        // Normalise key names to source strings stored in DB
+        if (key === "hackerNews") return "HackerNews";
+        if (key === "devTo") return "Dev.to";
+        return key.charAt(0).toUpperCase() + key.slice(1); // reddit -> Reddit
+      });
+
     if (selectedSources.length > 0) {
-      if (Object.keys(query).length > 0) {
-        query = {
-          $and: [{ $or: query.$or }, { source: { $in: selectedSources } }],
-        };
-      } else {
-        query.source = { $in: selectedSources };
-      }
+      query.source = { $in: selectedSources };
     }
   }
 
-  const feeds: any[] = await FeedItemModel.find(query).lean().limit(200);
+  const safeLimit = Math.min(Math.max(1, limit), 100);
+  const safeSkip = (Math.max(1, page) - 1) * safeLimit;
 
-  const ranked: IRankedFeedItem[] = feeds.map((f) => {
-    return {
-      _id: f._id.toString(),
-      title: f.title,
-      content: f.content,
-      source: f.source,
-      category: f.category,
-      popularityScore: f.popularityScore,
-      externalId: f.externalId,
-      createdAt: f.createdAt,
-      rankScore: calculateRank(f, userFocus),
-    };
-  });
+  const [feeds, total] = await Promise.all([
+    FeedItemModel.find(query).lean().limit(500), // Fetch enough to rank before slicing
+    FeedItemModel.countDocuments(query),
+  ]);
 
-  let sorted: IRankedFeedItem[] = [];
+  const ranked: IRankedFeedItem[] = feeds.map((f) => ({
+    _id: f._id.toString(),
+    title: f.title,
+    content: f.content,
+    source: f.source,
+    category: f.category,
+    summary: (f as any).summary,
+    tags: (f as any).tags,
+    popularityScore: f.popularityScore,
+    externalId: f.externalId,
+    createdAt: f.createdAt,
+    rankScore: calculateRank(f as unknown as IFeedItem, userFocus),
+  }));
+
+  let sorted: IRankedFeedItem[];
   switch (sortingPreference) {
     case "latest":
       sorted = ranked.sort(
@@ -93,7 +112,14 @@ export const getFeeds = async (
       break;
   }
 
-  return sorted.slice(0, 50);
+  const paginated = sorted.slice(safeSkip, safeSkip + safeLimit);
+
+  return {
+    items: paginated,
+    total,
+    page,
+    totalPages: Math.ceil(total / safeLimit),
+  };
 };
 
 export const getFeedById = async (
