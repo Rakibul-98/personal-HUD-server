@@ -1,29 +1,28 @@
 import { IUser, IUserDocument } from "./user.interface";
-import bcrypt from "bcryptjs";
 import UserModel from "./user.model";
 
-const SALT_ROUNDS = 10;
-
 export const createUser = async (user: IUser): Promise<IUserDocument> => {
-  const hashedPassword = await bcrypt.hash(user.password, SALT_ROUNDS);
-  const newUser = new UserModel({ ...user, password: hashedPassword });
+  // Password is already hashed by the controller before calling createUser.
+  // Do NOT hash again here — that was causing bcrypt.compare to always fail.
+  const newUser = new UserModel(user);
   return newUser.save();
 };
 
 export const findUserByEmail = async (
-  email: string
+  email: string,
 ): Promise<IUserDocument | null> => {
-  return UserModel.findOne({ email });
+  // Must use .select("+password") because the model has select:false on password field
+  return UserModel.findOne({ email }).select("+password");
 };
 
 export const findUserById = async (
-  id: string
+  id: string,
 ): Promise<IUserDocument | null> => {
   return UserModel.findById(id);
 };
 
 export const getUserByEmail = async (
-  email: string
+  email: string,
 ): Promise<Omit<IUserDocument, "password"> | null> => {
   return UserModel.findOne({ email }).select("-password");
 };

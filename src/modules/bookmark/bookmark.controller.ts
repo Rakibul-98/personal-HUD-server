@@ -10,7 +10,10 @@ export const addBookmark = async (req: Request, res: Response) => {
   if (error) throw new AppError(400, error.details[0].message);
 
   // Inject authenticated userId — ignore any userId in body
-  const bookmark = await bookmarkService.createBookmark({ ...req.body, userId });
+  const bookmark = await bookmarkService.createBookmark({
+    user: userId as any,
+    feedItem: req.body.feedItem,
+  });
   res.status(201).json({ success: true, data: bookmark });
 };
 
@@ -24,9 +27,9 @@ export const removeBookmark = async (req: Request, res: Response) => {
   const userId = (req as AuthenticatedRequest).user!._id.toString();
   const bookmarkId = req.params.id;
 
-  // Verify ownership before deleting
   const deleted = await bookmarkService.deleteBookmark(bookmarkId, userId);
-  if (!deleted) throw new AppError(404, "Bookmark not found or not owned by you");
+  if (!deleted)
+    throw new AppError(404, "Bookmark not found or not owned by you");
 
   res.json({ success: true, message: "Bookmark removed" });
 };

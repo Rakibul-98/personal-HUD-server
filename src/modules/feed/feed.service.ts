@@ -6,7 +6,7 @@ import FeedItemModel, { IFeedItemDocument } from "./feed.model";
 import { calculateRank } from "./feed.ranker";
 
 export const createFeedItem = async (
-  data: IFeedItem
+  data: IFeedItem,
 ): Promise<IFeedItemDocument> => {
   const feedItem = new FeedItemModel(data);
   return feedItem.save();
@@ -32,7 +32,12 @@ export const getFeeds = async ({
   overrideSortingPreference,
   page = 1,
   limit = 20,
-}: GetFeedsOptions): Promise<{ items: IRankedFeedItem[]; total: number; page: number; totalPages: number }> => {
+}: GetFeedsOptions): Promise<{
+  items: IRankedFeedItem[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
   let query: any = {};
   let sortingPreference: IUserSettings["sortingPreference"] = "rank";
 
@@ -55,18 +60,20 @@ export const getFeeds = async ({
   }
 
   // Source filter
-  if (feedSources) {
+  if (feedSources && typeof feedSources === "object") {
     const selectedSources = Object.entries(feedSources)
       .filter(([, enabled]) => enabled)
       .map(([key]) => {
-        // Normalise key names to source strings stored in DB
         if (key === "hackerNews") return "HackerNews";
         if (key === "devTo") return "Dev.to";
-        return key.charAt(0).toUpperCase() + key.slice(1); // reddit -> Reddit
+        return key.charAt(0).toUpperCase() + key.slice(1);
       });
 
     if (selectedSources.length > 0) {
       query.source = { $in: selectedSources };
+    } else {
+      // All sources disabled — return empty
+      return { items: [], total: 0, page: 1, totalPages: 0 };
     }
   }
 
@@ -98,12 +105,12 @@ export const getFeeds = async ({
       sorted = ranked.sort(
         (a, b) =>
           new Date(b.createdAt ?? 0).getTime() -
-          new Date(a.createdAt ?? 0).getTime()
+          new Date(a.createdAt ?? 0).getTime(),
       );
       break;
     case "popularity":
       sorted = ranked.sort(
-        (a, b) => (b.popularityScore || 0) - (a.popularityScore || 0)
+        (a, b) => (b.popularityScore || 0) - (a.popularityScore || 0),
       );
       break;
     case "rank":
@@ -123,7 +130,7 @@ export const getFeeds = async ({
 };
 
 export const getFeedById = async (
-  id: string
+  id: string,
 ): Promise<IFeedItemDocument | null> => {
   return FeedItemModel.findById(id);
 };
