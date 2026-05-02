@@ -4,112 +4,121 @@ import FeedItemModel, { IFeedItemDocument } from "../feed/feed.model";
 import Parser from "rss-parser";
 import { summarizeAndTag } from "../../shared/utils/llmService";
 import { load } from "cheerio";
+import { logger } from "../../shared/utils/logger";
 
-const parser = new Parser();
+const parser = new Parser({ timeout: 10000 });
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Fetches the full article content from a URL.
- * This is a simple implementation and might fail on complex sites.
- * A more robust solution would use a dedicated content extraction service.
- * @param url The article URL.
- * @returns The extracted HTML content.
+ * Fetches article HTML and extracts main content.
+ * Falls back to empty string on any error — never throws.
  */
 const fetchArticleContent = async (url: string): Promise<string> => {
   try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch article: ${response.statusText}`);
-    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) return "";
+
     const html = await response.text();
     const $ = load(html);
+    $("script, style, nav, footer, header, aside").remove();
 
-    // Simple heuristic: look for common article containers
-    const articleBody = $("article, .post-content, .entry-content").first();
-    if (articleBody.length > 0) {
-      return articleBody.html() || html;
-    }
+    const articleBody = $(
+      "article, [class*='post-content'], [class*='entry-content'], [class*='article-body'], main"
+    ).first();
 
-    return html;
+    return articleBody.length > 0
+      ? (articleBody.text().replace(/\s\s+/g, " ").trim())
+      : $("body").text().replace(/\s\s+/g, " ").trim().substring(0, 5000);
   } catch (error) {
-    console.error(`Error fetching content for ${url}:`, error);
+    console.log(`Could not fetch article content from ${url}`);
     return "";
   }
 };
 
 /**
- * Processes a single RSS source: fetches, summarizes, and saves new articles.
- * @param source The RSS source document.
+ * Processes a single RSS source.
+ * Never throws — logs errors and moves on.
  */
-const processSource = async (source: IRssSource) => {
+const processSource = async (source: IRssSource): Promise<void> => {
   try {
-    console.log(`[RSS] Processing source: ${source.name} (${source.url})`);
+    console.log(`[RSS] Processing: ${source.name}`);
     const feed = await parser.parseURL(source.url);
-    const newArticles: IFeedItemDocument[] = [];
+    let savedCount = 0;
 
     for (const item of feed.items) {
-      // Use a combination of title and link as a unique external ID
       const externalId = item.link || item.guid || item.title;
       if (!externalId) continue;
 
-      // Check if article already exists
-      const existingArticle = await FeedItemModel.findOne({ externalId });
-      if (existingArticle) continue;
+      const exists = await FeedItemModel.exists({ externalId });
+      if (exists) continue;
 
-      // 1. Fetch full content (if link is available)
-      const articleLink = item.link;
-      let content = item.content || item.contentSnippet || "";
-      if (articleLink) {
-        const fullContent = await fetchArticleContent(articleLink);
-        if (fullContent) {
-          content = fullContent;
-        }
+      // Fetch content only if LLM key is available (no point fetching without it)
+      const LLM_KEY = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY;
+      let content = item.contentSnippet || item.content || "";
+
+      if (LLM_KEY && item.link) {
+        const fullContent = await fetchArticleContent(item.link);
+        if (fullContent) content = fullContent;
+        await sleep(200); // Brief delay between article fetches
       }
 
-      // 2. Summarize and Tag using LLM
       const { summary, tags } = await summarizeAndTag(content);
 
-      // 3. Save new article
-      const newArticle = new FeedItemModel({
-        title: item.title || "No Title",
-        content: content,
+      await new FeedItemModel({
+        title: item.title || "Untitled",
+        content: item.link || content,
         source: source.name,
-        externalId: externalId,
-        summary: summary,
-        tags: tags,
-        // Assuming the existing feed model handles other fields like category, rankScore
-      });
+        externalId,
+        summary,
+        tags,
+        category: tags[0] || "general",
+      }).save();
 
-      await newArticle.save();
-      newArticles.push(newArticle);
+      savedCount++;
     }
 
-    // Update last fetched time
     source.lastFetched = new Date();
     await source.save();
 
-    console.log(
-      `[RSS] Finished processing ${source.name}. Saved ${newArticles.length} new articles.`
-    );
-  } catch (error) {
-    console.error(`[RSS] Failed to process source ${source.name}:`, error);
+    console.log(`[RSS] ${source.name}: saved ${savedCount} new articles`);
+  } catch (error: any) {
+    // Log but never crash the whole scheduler over one bad source
+    console.log(`[RSS] Failed processing ${source.name}: ${error.message}`);
   }
 };
 
-const runFeedScheduler = async () => {
-  console.log("[RSS] Starting scheduled feed fetching job...");
+const runFeedScheduler = async (): Promise<void> => {
+  console.log("[RSS] Starting scheduled fetch...");
   try {
     const activeSources = await RssSource.find({ isActive: true });
 
-    await Promise.all(activeSources.map(processSource));
+    if (activeSources.length === 0) {
+      console.log("[RSS] No active RSS sources found.");
+      return;
+    }
 
-    console.log("[RSS] Scheduled feed fetching job finished.");
-  } catch (error) {
-    console.error("[RSS] Error in runFeedScheduler:", error);
+    // Process sources sequentially to avoid hammering sites simultaneously
+    for (const source of activeSources) {
+      await processSource(source);
+      await sleep(500);
+    }
+
+    console.log("[RSS] Scheduled fetch complete.");
+  } catch (error: any) {
+    console.log(`[RSS] Scheduler error: ${error.message}`);
   }
 };
 
-export const startRssScheduler = () => {
+export const startRssScheduler = (): void => {
+  // Run every 30 minutes
   cron.schedule("*/30 * * * *", runFeedScheduler);
-  console.log("RSS Feed Scheduler started. Running every 30 minutes.");
+  console.log("RSS scheduler started — running every 30 minutes.");
+  // Run immediately on startup
   runFeedScheduler();
 };

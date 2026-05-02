@@ -1,35 +1,32 @@
 import { Request, Response } from "express";
 import * as bookmarkService from "./bookmark.service";
 import { createBookmarkSchema } from "./bookmark.validation";
+import { AuthenticatedRequest } from "../../shared/types";
+import { AppError } from "../../shared/middlewares/errorHandler";
 
 export const addBookmark = async (req: Request, res: Response) => {
-  try {
-    const { error } = createBookmarkSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.message });
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  const { error } = createBookmarkSchema.validate(req.body);
+  if (error) throw new AppError(400, error.details[0].message);
 
-    const bookmark = await bookmarkService.createBookmark(req.body);
-    res.status(201).json(bookmark);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
+  // Inject authenticated userId — ignore any userId in body
+  const bookmark = await bookmarkService.createBookmark({ ...req.body, userId });
+  res.status(201).json({ success: true, data: bookmark });
 };
 
 export const getBookmarks = async (req: Request, res: Response) => {
-  try {
-    const userId = req.params.userId;
-    const bookmarks = await bookmarkService.getUserBookmarks(userId);
-    res.json(bookmarks);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  const bookmarks = await bookmarkService.getUserBookmarks(userId);
+  res.json({ success: true, data: bookmarks });
 };
 
 export const removeBookmark = async (req: Request, res: Response) => {
-  try {
-    const bookmarkId = req.params.id;
-    await bookmarkService.deleteBookmark(bookmarkId);
-    res.json({ message: "Bookmark deleted" });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
+  const userId = (req as AuthenticatedRequest).user!._id.toString();
+  const bookmarkId = req.params.id;
+
+  // Verify ownership before deleting
+  const deleted = await bookmarkService.deleteBookmark(bookmarkId, userId);
+  if (!deleted) throw new AppError(404, "Bookmark not found or not owned by you");
+
+  res.json({ success: true, message: "Bookmark removed" });
 };

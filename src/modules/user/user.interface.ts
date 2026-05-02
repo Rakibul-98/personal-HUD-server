@@ -5,6 +5,7 @@ export interface IUser {
   email: string;
   password: string;
   role?: "user" | "admin";
+  avatar?:"string"
 }
 
 export interface IUserDocument extends Document {
@@ -15,4 +16,5 @@ export interface IUserDocument extends Document {
   role?: "user" | "admin";
   createdAt?: Date;
   updatedAt?: Date;
+   avatar?:"string"
 }

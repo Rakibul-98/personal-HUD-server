@@ -4,9 +4,13 @@ export interface IFeedItem {
   content: string;
   source?: string;
   category?: string;
+  summary?: string;
+  tags?: string[];
   popularityScore?: number;
   externalId: string;
+  isBookmarked?: boolean;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IRankedFeedItem extends IFeedItem {

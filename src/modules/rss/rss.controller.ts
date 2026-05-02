@@ -1,71 +1,53 @@
 import { Request, Response } from "express";
-import RssSource, { IRssSource } from "../../models/RssSource";
+import RssSource from "../../models/RssSource";
 import { AuthenticatedRequest } from "../../shared/types";
+import { AppError } from "../../shared/middlewares/errorHandler";
+
+const getUserId = (req: Request) => (req as AuthenticatedRequest).user!._id.toString();
 
 export const addSource = async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthenticatedRequest;
-    const { name, url } = req.body;
-    const userId = authReq.user?._id;
+  const userId = getUserId(req);
+  const { name, url } = req.body;
 
-    const newSource: IRssSource = new RssSource({
-      userId,
-      name,
-      url,
-    });
+  if (!name?.trim()) throw new AppError(400, "Source name is required");
+  if (!url?.trim()) throw new AppError(400, "Source URL is required");
+  if (!/^https?:\/\/.+/.test(url)) throw new AppError(400, "URL must start with http:// or https://");
 
-    const source = await newSource.save();
-    res.status(201).json(source);
-  } catch (error) {
-    res.status(500).json({ message: "Error adding RSS source", error });
-  }
+  const source = await RssSource.create({ userId, name: name.trim(), url: url.trim() });
+  res.status(201).json({ success: true, data: source });
 };
 
 export const getSources = async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthenticatedRequest;
-    const userId = authReq.user?._id;
-    const sources = await RssSource.find({ userId }).sort({ createdAt: -1 });
-    res.json(sources);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching RSS sources", error });
-  }
+  const userId = getUserId(req);
+  const sources = await RssSource.find({ userId }).sort({ createdAt: -1 }).lean();
+  res.json({ success: true, data: sources });
 };
 
 export const updateSource = async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthenticatedRequest;
-    const { name, url, isActive } = req.body;
-    const source = await RssSource.findOneAndUpdate(
-      { _id: req.params.id, userId: authReq.user?._id },
-      { name, url, isActive },
-      { new: true }
-    );
+  const userId = getUserId(req);
+  const { name, url, isActive } = req.body;
 
-    if (!source) {
-      return res.status(404).json({ message: "Source not found" });
-    }
-
-    res.json(source);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating RSS source", error });
+  const updates: Record<string, any> = {};
+  if (name !== undefined) updates.name = name.trim();
+  if (url !== undefined) {
+    if (!/^https?:\/\/.+/.test(url)) throw new AppError(400, "Invalid URL");
+    updates.url = url.trim();
   }
+  if (isActive !== undefined) updates.isActive = Boolean(isActive);
+
+  const source = await RssSource.findOneAndUpdate(
+    { _id: req.params.id, userId },
+    updates,
+    { new: true, runValidators: true }
+  );
+
+  if (!source) throw new AppError(404, "RSS source not found or not owned by you");
+  res.json({ success: true, data: source });
 };
 
 export const deleteSource = async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthenticatedRequest;
-    const source = await RssSource.findOneAndDelete({
-      _id: req.params.id,
-      userId: authReq.user?._id,
-    });
-
-    if (!source) {
-      return res.status(404).json({ message: "Source not found" });
-    }
-
-    res.json({ message: "Source deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting RSS source", error });
-  }
+  const userId = getUserId(req);
+  const source = await RssSource.findOneAndDelete({ _id: req.params.id, userId });
+  if (!source) throw new AppError(404, "RSS source not found or not owned by you");
+  res.json({ success: true, message: "Source deleted" });
 };
